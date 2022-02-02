@@ -14,8 +14,8 @@ set -e
 # sudoInstall=true
 
 scriptname=$(basename "$0")
-scriptbuildnum="1.5.4"
-scriptbuilddate="2020-06-25"
+scriptbuildnum="1.6.0~sapslaj"
+scriptbuilddate="2022-02-02"
 
 # CHECK DEPENDANCIES AND SET NET RETRIEVAL TOOL
 if ! unzip -h 2&> /dev/null; then
@@ -105,10 +105,12 @@ if [[ "$OS" == "linux" ]]; then
   if [[ -z $PROC ]]; then
     PROC=$(cat /proc/cpuinfo | awk '/flags/ {if($0 ~ /lm/) {print "amd64"; exit} else {print "386"; exit}}')
   fi
+elif [[ "$OS" == "darwin" ]]; then
+  PROC=$(uname -m | awk '{if($1 ~ /^arm/) {print $1; exit} else {print "amd64"; exit}}') 
 else
   PROC="amd64"
 fi
-[[ $PROC =~ arm ]] && PROC="arm"  # terraform downloads use "arm" not full arm type
+#[[ $PROC =~ arm ]] && PROC="arm"  # terraform downloads use "arm" not full arm type
 
 # CREATE FILENAME AND URL FROM GATHERED PARAMETERS
 FILENAME="terraform_${VERSION}_${OS}_${PROC}.zip"
