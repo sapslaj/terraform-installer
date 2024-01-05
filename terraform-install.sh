@@ -3,19 +3,21 @@
 set -e
 
 # TERRAFORM INSTALLER - Automated Terraform Installation
-#   Apache 2 License - Copyright (c) 2018  Robert Peteuil  @RobertPeteuil
+#   Apache 2 License
+#   Copyright (c) 2018  Robert Peteuil  @RobertPeteuil
+#   Copyright (c) 2022, 2024  Justin Roberson  @sapslaj
 #
 #     Automatically Download, Extract and Install
 #        Latest or Specific Version of Terraform
 #
-#   from: https://github.com/robertpeteuil/terraform-installer
+#   from: https://github.com/sapslaj/terraform-installer
 
 # Uncomment line below to always use 'sudo' to install to /usr/local/bin/
 # sudoInstall=true
 
 scriptname=$(basename "$0")
-scriptbuildnum="1.6.0~sapslaj"
-scriptbuilddate="2022-02-02"
+scriptbuildnum="1.7.0~sapslaj"
+scriptbuilddate="2024-01-05"
 
 # CHECK DEPENDANCIES AND SET NET RETRIEVAL TOOL
 if ! unzip -h 2&> /dev/null; then
@@ -41,9 +43,10 @@ displayVer() {
 }
 
 usage() {
-  [[ "$1" ]] && echo -e "Download and Install Terraform - Latest Version unless '-i' specified\n"
-  echo -e "usage: ${scriptname} [-i VERSION] [-a] [-c] [-h] [-v]"
+  [[ "$1" ]] && echo -e "Download and Install Terraform - 1.5.7 unless '-i' or '-l' is specified\n"
+  echo -e "usage: ${scriptname} [-i VERSION] [-l] [-a] [-c] [-h] [-v]"
   echo -e "     -i VERSION\t: specify version to install in format '0.11.8' (OPTIONAL)"
+  echo -e "     -l\t\t: install latest Terraform version, even if it is a non-open source version"
   echo -e "     -a\t\t: automatically use sudo to install to /usr/local/bin (or \$TF_INSTALL_DIR)"
   echo -e "     -c\t\t: leave binary in working directory (for CI/DevOps use)"
   echo -e "     -h\t\t: help"
@@ -79,8 +82,9 @@ done
 echo -n "$LATEST"
 }
 
-while getopts ":i:achv" arg; do
+while getopts ":i:lachv" arg; do
   case "${arg}" in
+    l)  nonOpenSourceTerraform=true;;
     a)  sudoInstall=true;;
     c)  cwdInstall=true;;
     i)  VERSION=${OPTARG};;
@@ -94,7 +98,11 @@ shift $((OPTIND-1))
 
 # POPULATE VARIABLES NEEDED TO CREATE DOWNLOAD URL AND FILENAME
 if [[ -z "$VERSION" ]]; then
-  VERSION=$(getLatest)
+  if [[ "$nonOpenSourceTerraform" ]]; then
+    VERSION=$(getLatest)
+  else
+    VERSION="1.5.7"
+  fi
 fi
 OS=$(uname -s | tr '[:upper:]' '[:lower:]')
 if [[ "$OS" == "linux" ]]; then
@@ -106,7 +114,7 @@ if [[ "$OS" == "linux" ]]; then
     PROC=$(cat /proc/cpuinfo | awk '/flags/ {if($0 ~ /lm/) {print "amd64"; exit} else {print "386"; exit}}')
   fi
 elif [[ "$OS" == "darwin" ]]; then
-  PROC=$(uname -m | awk '{if($1 ~ /^arm/) {print $1; exit} else {print "amd64"; exit}}') 
+  PROC=$(uname -m | awk '{if($1 ~ /^arm/) {print $1; exit} else {print "amd64"; exit}}')
 else
   PROC="amd64"
 fi
